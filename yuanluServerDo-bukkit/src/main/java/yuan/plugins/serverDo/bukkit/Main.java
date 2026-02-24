@@ -66,6 +66,10 @@ public class Main extends JavaPlugin implements Listener {
 	public static void send(Player player, byte[] data) {
 		Main plugin = getMain();
 		if (plugin == null || !plugin.isEnabled()) {
+			val p = Bukkit.getPluginManager().getPlugin("yuanluServerDo");
+			if (p instanceof Main && p.isEnabled()) plugin = (Main) p;
+		}
+		if (plugin == null || !plugin.isEnabled()) {
 			try {
 				plugin = JavaPlugin.getPlugin(Main.class);
 			} catch (Throwable ignored) {
@@ -78,7 +82,11 @@ public class Main extends JavaPlugin implements Listener {
 		}
 		if (isDEBUG()) plugin.getLogger().info("发送: " + player.getName() + " " + Arrays.toString(data));
 		fireCrossServerTeleportEvent(player, data);
-		player.sendPluginMessage(plugin, ShareData.BC_CHANNEL, data);
+		try {
+			player.sendPluginMessage(plugin, ShareData.BC_CHANNEL, data);
+		} catch (IllegalArgumentException e) {
+			plugin.getLogger().warning("sendPluginMessage failed(plugin enabled=" + plugin.isEnabled() + ", player=" + player.getName() + "): " + e.getMessage());
+		}
 	}
 
 	/**
