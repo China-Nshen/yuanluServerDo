@@ -31,6 +31,7 @@ import yuan.plugins.serverDo.ShareData.TabType;
 import yuan.plugins.serverDo.bukkit.cmds.CmdTpaccept;
 import yuan.plugins.serverDo.bukkit.cmds.CmdVanish;
 import yuan.plugins.serverDo.bukkit.cmds.CommandManager;
+import yuan.plugins.serverDo.bukkit.event.CrossServerTeleportEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1107,6 +1108,7 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 		 */
 		public static void tpToRemote(@NonNull Player player, @NonNull ShareLocation loc, boolean noRecord) {
 			if (loc.getServer() == null) throw new IllegalArgumentException("No server specified: " + loc);
+			Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), null, loc));
 			if (!noRecord) BackHandler.recordLocation(player, loc.getServer());
 			listenCallBack(player, Channel.TP_LOC, 0, (BoolConsumer) success -> {
 				if (!success) BC_ERROR.send(player);
@@ -1136,6 +1138,7 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 				checkDelay(player, Conf.delay, () -> tpToRemote(player, mover, target, -1, needCooldown, noRecord));
 				return;
 			}
+			Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, mover, target, null));
 			if (!noRecord) BackHandler.recordLocation(player, null, target);
 			listenCallBack(player, Channel.TP, 7, (BiBoolConsumer) (success, error) -> {
 				if (error) BC_ERROR.send(player);
