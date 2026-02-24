@@ -1,11 +1,13 @@
 package yuan.plugins.serverDo.bukkit;
 
 import cn.mapland.yuanlu.updater.bukkit.BukkitUpdater;
+import com.germ.germplugin.api.GermPacketAPI;
 import lombok.Getter;
 import lombok.val;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.MultiLineChart;
 import org.bstats.charts.SimplePie;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -14,13 +16,16 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import yuan.plugins.serverDo.Channel;
+import yuan.plugins.serverDo.ShareLocation;
 import yuan.plugins.serverDo.ShareData;
 import yuan.plugins.serverDo.Tool;
 import yuan.plugins.serverDo.bukkit.MESSAGE.Msg;
 import yuan.plugins.serverDo.bukkit.cmds.Cmd;
 import yuan.plugins.serverDo.bukkit.cmds.CommandManager;
+import yuan.plugins.serverDo.bukkit.event.CrossServerTeleportEvent;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -59,8 +64,59 @@ public class Main extends JavaPlugin implements Listener {
 	 * @param data   数据
 	 */
 	public static void send(Player player, byte[] data) {
-		if (isDEBUG()) getMain().getLogger().info("发送: " + player.getName() + " " + Arrays.toString(data));
-		player.sendPluginMessage(getMain(), ShareData.BC_CHANNEL, data);
+		Main plugin = getMain();
+		if (plugin == null || !plugin.isEnabled()) {
+			try {
+				plugin = JavaPlugin.getPlugin(Main.class);
+			} catch (Throwable ignored) {
+				// ignore and handle below
+			}
+		}
+		if (plugin == null || !plugin.isEnabled()) {
+			Bukkit.getLogger().warning("[yuanluServerDo] plugin is not enabled, cancel sendPluginMessage for " + player.getName());
+			return;
+		}
+		if (isDEBUG()) plugin.getLogger().info("发送: " + player.getName() + " " + Arrays.toString(data));
+		fireCrossServerTeleportEvent(player, data);
+		player.sendPluginMessage(plugin, ShareData.BC_CHANNEL, data);
+	}
+
+	/**
+	 * 在跨服传送数据包发出前触发事件。
+	 *
+	 * @param player 当前发送数据的玩家
+	 * @param data   即将发送的数据包
+	 */
+	private static void fireCrossServerTeleportEvent(Player player, byte[] data) {
+		if (data == null || data.length < 5) return;
+		final int channelId = ByteBuffer.wrap(data, 0, 4).getInt();
+		if (channelId == Channel.TP.ordinal() && Channel.getSubId(data) == 6) {
+			Channel.Tp.p6C_tpThird(data, (mover, target) -> {
+				if (isDEBUG()) {
+					getMain().getLogger().info("[CrossServerTeleportEvent] TP mover=" + mover + ", target=" + target + ", operator=" + player.getName());
+				}
+				Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, mover, target, null));
+				openGermTpGui(player);
+			});
+			return;
+		}
+		if (channelId == Channel.TP_LOC.ordinal() && Channel.getSubId(data) == 0) {
+			Channel.TpLoc.p0C_tpLoc(data, (loc, server) -> {
+				ShareLocation targetLoc = loc.clone();
+				targetLoc.setServer(server);
+				if (isDEBUG()) {
+					getMain().getLogger().info("[CrossServerTeleportEvent] TP_LOC server=" + server + ", loc=" + targetLoc + ", operator=" + player.getName());
+				}
+				Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), null, targetLoc));
+				openGermTpGui(player);
+			});
+		}
+	}
+
+	/** 调用 GermPlugin 打开传送 GUI。 */
+	private static void openGermTpGui(Player player) {
+		GermPacketAPI.openGui(player, "tpgui");
+		if (isDEBUG()) getMain().getLogger().info("[CrossServerTeleportEvent] invoke GermPacketAPI.openGui(" + player.getName() + ", tpgui)");
 	}
 
 	/**
