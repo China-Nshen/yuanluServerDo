@@ -46,7 +46,7 @@ public final class CmdHome extends TabHome {
 					Core.listenCallBack(player, Channel.HOME, 3, (BoolConsumer) success -> {
 						if (!success) {
 							BC_ERROR.send(sender);
-							Main.openGermGui(player, "null", "basic.bungee-error");
+							Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
 						}
 
 					});

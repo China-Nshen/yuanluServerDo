@@ -1105,7 +1105,7 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 			listenCallBack(player, Channel.TP_LOC, 0, (BoolConsumer) success -> {
 				if (!success) {
 					BC_ERROR.send(player);
-					Main.openGermGui(player, "null", "basic.bungee-error");
+					Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
 				}
 			});
 			byte[] data = Channel.TpLoc.s0C_tpLoc(loc, loc.getServer());
@@ -1139,7 +1139,7 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 			listenCallBack(player, Channel.TP, 7, (BiBoolConsumer) (success, error) -> {
 				if (error) {
 					BC_ERROR.send(player);
-					Main.openGermGui(player, "null", "basic.bungee-error");
+					Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
 				}
 				else if (!success) BC_PLAYER_OFF.send(player);
 			});

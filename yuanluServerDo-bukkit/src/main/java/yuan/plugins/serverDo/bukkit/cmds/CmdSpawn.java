@@ -47,7 +47,7 @@ public final class CmdSpawn extends Cmd {
 				Core.listenCallBack(player, Channel.WARP, 3, (BoolConsumer) success -> {
 					if (!success) {
 						BC_ERROR.send(sender);
-						Main.openGermGui(player, "null", "basic.bungee-error");
+						Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
 					}
 				});
 				Main.send(player, Channel.Warp.s3C_tpWarp(name));

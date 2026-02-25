@@ -46,7 +46,7 @@ public final class CmdWarp extends TabWarp {
 					Core.listenCallBack(player, Channel.WARP, 3, (BoolConsumer) success -> {
 						if (!success) {
 							BC_ERROR.send(sender);
-							Main.openGermGui(player, "null", "basic.bungee-error");
+							Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
 						}
 					});
 					Core.BackHandler.recordLocation(player,server);

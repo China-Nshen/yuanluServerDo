@@ -85,6 +85,27 @@ public class Main extends JavaPlugin implements Listener {
 		else Bukkit.getScheduler().runTask(plugin, run);
 	}
 
+	/**
+	 * 用控制台命令方式调用Germ打开GUI。
+	 */
+	public static void openGermGuiByCommand(Player player, String gui, String reason) {
+		String cmd = "gp open " + player.getName() + " " + gui;
+		Runnable run = () -> {
+			boolean ok = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+			if (ok) ShareData.getLogger().info("[CrossServerTeleportEvent] command success: /" + cmd + ", reason=" + reason);
+			else ShareData.getLogger().warning("[CrossServerTeleportEvent] command failed: /" + cmd + ", reason=" + reason);
+		};
+		if (Bukkit.isPrimaryThread()) run.run();
+		else {
+			Main plugin = getMain();
+			if (plugin == null) {
+				ShareData.getLogger().warning("[CrossServerTeleportEvent] skip command: /" + cmd + ", reason=" + reason + ", plugin=null");
+				return;
+			}
+			Bukkit.getScheduler().runTask(plugin, run);
+		}
+	}
+
 	public static void send(Player player, byte[] data) {
 		Main plugin = getMain();
 		if (plugin == null || !plugin.isEnabled()) {
