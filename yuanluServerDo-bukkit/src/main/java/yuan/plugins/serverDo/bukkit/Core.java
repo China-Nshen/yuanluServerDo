@@ -1100,13 +1100,12 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 			if (loc.getServer() == null) throw new IllegalArgumentException("No server specified: " + loc);
 			ShareData.getLogger().info("[CrossServerTeleportEvent] TP_LOC server=" + loc.getServer() + ", loc=" + loc + ", operator=" + player.getName());
 			Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), null, loc));
-			GermPacketAPI.openGui(player, "tpgui");
+			Main.openGermGui(player, "tpgui", "cross-server-teleport");
 			if (!noRecord) BackHandler.recordLocation(player, loc.getServer());
 			listenCallBack(player, Channel.TP_LOC, 0, (BoolConsumer) success -> {
 				if (!success) {
 					BC_ERROR.send(player);
-					ShareData.getLogger().info("[CrossServerTeleportEvent] basic.bungee-error => GermPacketAPI.openGui(" + player.getName() + ", null)");
-					GermPacketAPI.openGui(player, "null");
+					Main.openGermGui(player, "null", "basic.bungee-error");
 				}
 			});
 			byte[] data = Channel.TpLoc.s0C_tpLoc(loc, loc.getServer());
@@ -1135,13 +1134,12 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 			}
 			ShareData.getLogger().info("[CrossServerTeleportEvent] TP mover=" + mover + ", target=" + target + ", operator=" + player.getName());
 			Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, mover, target, null));
-			GermPacketAPI.openGui(player, "tpgui");
+			Main.openGermGui(player, "tpgui", "cross-server-teleport");
 			if (!noRecord) BackHandler.recordLocation(player, null, target);
 			listenCallBack(player, Channel.TP, 7, (BiBoolConsumer) (success, error) -> {
 				if (error) {
 					BC_ERROR.send(player);
-					ShareData.getLogger().info("[CrossServerTeleportEvent] basic.bungee-error => GermPacketAPI.openGui(" + player.getName() + ", null)");
-					GermPacketAPI.openGui(player, "null");
+					Main.openGermGui(player, "null", "basic.bungee-error");
 				}
 				else if (!success) BC_PLAYER_OFF.send(player);
 			});

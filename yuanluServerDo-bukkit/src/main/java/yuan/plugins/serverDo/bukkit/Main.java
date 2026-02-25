@@ -63,6 +63,28 @@ public class Main extends JavaPlugin implements Listener {
 	 * @param player 玩家
 	 * @param data   数据
 	 */
+
+	/**
+	 * 调用Germ GUI, 自动保证主线程执行并输出结果日志。
+	 */
+	public static void openGermGui(Player player, String gui, String reason) {
+		Main plugin = getMain();
+		if (plugin == null) {
+			ShareData.getLogger().warning("[CrossServerTeleportEvent] skip GermPacketAPI.openGui(" + player.getName() + ", " + gui + ") reason=" + reason + ", plugin=null");
+			return;
+		}
+		Runnable run = () -> {
+			try {
+				GermPacketAPI.openGui(player, gui);
+				ShareData.getLogger().info("[CrossServerTeleportEvent] GermPacketAPI.openGui success: player=" + player.getName() + ", gui=" + gui + ", reason=" + reason);
+			} catch (Throwable e) {
+				ShareData.getLogger().warning("[CrossServerTeleportEvent] GermPacketAPI.openGui failed: player=" + player.getName() + ", gui=" + gui + ", reason=" + reason + ", err=" + e.getClass().getSimpleName() + ": " + e.getMessage());
+			}
+		};
+		if (Bukkit.isPrimaryThread()) run.run();
+		else Bukkit.getScheduler().runTask(plugin, run);
+	}
+
 	public static void send(Player player, byte[] data) {
 		Main plugin = getMain();
 		if (plugin == null || !plugin.isEnabled()) {

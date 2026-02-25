@@ -4,7 +4,6 @@
 package yuan.plugins.serverDo.bukkit.cmds;
 
 import lombok.val;
-import com.germ.germplugin.api.GermPacketAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -44,12 +43,11 @@ public final class CmdSpawn extends Cmd {
 				msg("tp", sender, name, server);
 				ShareData.getLogger().info("[CrossServerTeleportEvent] SPAWN name=" + name + ", server=" + server + ", operator=" + player.getName());
 				Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "spawn:" + name + "@" + server, null));
-				GermPacketAPI.openGui(player, "tpgui");
+				Main.openGermGui(player, "tpgui", "cross-server-teleport");
 				Core.listenCallBack(player, Channel.WARP, 3, (BoolConsumer) success -> {
 					if (!success) {
 						BC_ERROR.send(sender);
-						ShareData.getLogger().info("[CrossServerTeleportEvent] basic.bungee-error => GermPacketAPI.openGui(" + player.getName() + ", null)");
-						GermPacketAPI.openGui(player, "null");
+						Main.openGermGui(player, "null", "basic.bungee-error");
 					}
 				});
 				Main.send(player, Channel.Warp.s3C_tpWarp(name));
