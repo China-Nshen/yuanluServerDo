@@ -45,7 +45,10 @@ public final class CmdHome extends TabHome {
 					Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "home:" + name + "@" + server, null));
 					GermPacketAPI.openGui(player, "tpgui");
 					Core.listenCallBack(player, Channel.HOME, 3, (BoolConsumer) success -> {
-						if (!success) BC_ERROR.send(sender);
+						if (!success) {
+							BC_ERROR.send(sender);
+							GermPacketAPI.openGui(player, "null");
+						}
 
 					});
 					Core.BackHandler.recordLocation(player,server);

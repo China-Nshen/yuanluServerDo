@@ -1103,7 +1103,10 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 			GermPacketAPI.openGui(player, "tpgui");
 			if (!noRecord) BackHandler.recordLocation(player, loc.getServer());
 			listenCallBack(player, Channel.TP_LOC, 0, (BoolConsumer) success -> {
-				if (!success) BC_ERROR.send(player);
+				if (!success) {
+					BC_ERROR.send(player);
+					GermPacketAPI.openGui(player, "null");
+				}
 			});
 			byte[] data = Channel.TpLoc.s0C_tpLoc(loc, loc.getServer());
 			Main.send(player,data);
@@ -1134,7 +1137,10 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 			GermPacketAPI.openGui(player, "tpgui");
 			if (!noRecord) BackHandler.recordLocation(player, null, target);
 			listenCallBack(player, Channel.TP, 7, (BiBoolConsumer) (success, error) -> {
-				if (error) BC_ERROR.send(player);
+				if (error) {
+					BC_ERROR.send(player);
+					GermPacketAPI.openGui(player, "null");
+				}
 				else if (!success) BC_PLAYER_OFF.send(player);
 			});
 			Main.send(player, Channel.Tp.s6C_tpThird(mover, target));
