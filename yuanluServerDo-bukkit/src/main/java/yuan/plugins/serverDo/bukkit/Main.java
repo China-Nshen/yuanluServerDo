@@ -1,11 +1,13 @@
 package yuan.plugins.serverDo.bukkit;
 
 import cn.mapland.yuanlu.updater.bukkit.BukkitUpdater;
+import com.germ.germplugin.api.GermPacketAPI;
 import lombok.Getter;
 import lombok.val;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.MultiLineChart;
 import org.bstats.charts.SimplePie;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -58,9 +60,51 @@ public class Main extends JavaPlugin implements Listener {
 	 * @param player 玩家
 	 * @param data   数据
 	 */
+
+	/**
+	 * 调用Germ GUI, 自动保证主线程执行并输出结果日志。
+	 */
+	public static void openGermGui(Player player, String gui, String reason) {
+		Main plugin = getMain();
+		if (plugin == null) {
+			ShareData.getLogger().warning("[CrossServerTeleportEvent] skip GermPacketAPI.openGui(" + player.getName() + ", " + gui + ") reason=" + reason + ", plugin=null");
+			return;
+		}
+		Runnable run = () -> {
+			try {
+				GermPacketAPI.openGui(player, gui);
+				ShareData.getLogger().info("[CrossServerTeleportEvent] GermPacketAPI.openGui success: player=" + player.getName() + ", gui=" + gui + ", reason=" + reason);
+			} catch (Throwable e) {
+				ShareData.getLogger().warning("[CrossServerTeleportEvent] GermPacketAPI.openGui failed: player=" + player.getName() + ", gui=" + gui + ", reason=" + reason + ", err=" + e.getClass().getSimpleName() + ": " + e.getMessage());
+			}
+		};
+		if (Bukkit.isPrimaryThread()) run.run();
+		else Bukkit.getScheduler().runTask(plugin, run);
+	}
+
 	public static void send(Player player, byte[] data) {
-		if (isDEBUG()) getMain().getLogger().info("发送: " + player.getName() + " " + Arrays.toString(data));
-		player.sendPluginMessage(getMain(), ShareData.BC_CHANNEL, data);
+		Main plugin = getMain();
+		if (plugin == null || !plugin.isEnabled()) {
+			val p = Bukkit.getPluginManager().getPlugin("yuanluServerDo");
+			if (p instanceof Main && p.isEnabled()) plugin = (Main) p;
+		}
+		if (plugin == null || !plugin.isEnabled()) {
+			try {
+				plugin = JavaPlugin.getPlugin(Main.class);
+			} catch (Throwable ignored) {
+				// ignore and handle below
+			}
+		}
+		if (plugin == null || !plugin.isEnabled()) {
+			Bukkit.getLogger().warning("[yuanluServerDo] plugin is not enabled, cancel sendPluginMessage for " + player.getName());
+			return;
+		}
+		if (isDEBUG()) plugin.getLogger().info("发送: " + player.getName() + " " + Arrays.toString(data));
+		try {
+			player.sendPluginMessage(plugin, ShareData.BC_CHANNEL, data);
+		} catch (IllegalArgumentException e) {
+			plugin.getLogger().warning("sendPluginMessage failed(plugin enabled=" + plugin.isEnabled() + ", player=" + player.getName() + "): " + e.getMessage());
+		}
 	}
 
 	/**
