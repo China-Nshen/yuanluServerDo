@@ -81,50 +81,11 @@ public class Main extends JavaPlugin implements Listener {
 			return;
 		}
 		if (isDEBUG()) plugin.getLogger().info("发送: " + player.getName() + " " + Arrays.toString(data));
-		fireCrossServerTeleportEvent(player, data);
 		try {
 			player.sendPluginMessage(plugin, ShareData.BC_CHANNEL, data);
 		} catch (IllegalArgumentException e) {
 			plugin.getLogger().warning("sendPluginMessage failed(plugin enabled=" + plugin.isEnabled() + ", player=" + player.getName() + "): " + e.getMessage());
 		}
-	}
-
-	/**
-	 * 在跨服传送数据包发出前触发事件。
-	 *
-	 * @param player 当前发送数据的玩家
-	 * @param data   即将发送的数据包
-	 */
-	private static void fireCrossServerTeleportEvent(Player player, byte[] data) {
-		if (data == null || data.length < 5) return;
-		final int channelId = ByteBuffer.wrap(data, 0, 4).getInt();
-		if (channelId == Channel.TP.ordinal() && Channel.getSubId(data) == 6) {
-			Channel.Tp.p6C_tpThird(data, (mover, target) -> {
-				if (isDEBUG()) {
-					getMain().getLogger().info("[CrossServerTeleportEvent] TP mover=" + mover + ", target=" + target + ", operator=" + player.getName());
-				}
-				Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, mover, target, null));
-				openGermTpGui(player);
-			});
-			return;
-		}
-		if (channelId == Channel.TP_LOC.ordinal() && Channel.getSubId(data) == 0) {
-			Channel.TpLoc.p0C_tpLoc(data, (loc, server) -> {
-				ShareLocation targetLoc = loc.clone();
-				targetLoc.setServer(server);
-				if (isDEBUG()) {
-					getMain().getLogger().info("[CrossServerTeleportEvent] TP_LOC server=" + server + ", loc=" + targetLoc + ", operator=" + player.getName());
-				}
-				Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), null, targetLoc));
-				openGermTpGui(player);
-			});
-		}
-	}
-
-	/** 调用 GermPlugin 打开传送 GUI。 */
-	private static void openGermTpGui(Player player) {
-		GermPacketAPI.openGui(player, "tpgui");
-		if (isDEBUG()) getMain().getLogger().info("[CrossServerTeleportEvent] invoke GermPacketAPI.openGui(" + player.getName() + ", tpgui)");
 	}
 
 	/**
