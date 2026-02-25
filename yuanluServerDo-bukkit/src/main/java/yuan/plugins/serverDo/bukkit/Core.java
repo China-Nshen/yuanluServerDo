@@ -509,17 +509,6 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 			if (!meVer.equals(info.getVersion()))
 				Bukkit.getLogger().info("");
 				// VER_NO_RECOMMEND.send(player, meVer, info.getVersion());
-			if (info.getProxyType() == Channel.ServerInfo.ServerPkg.ProxyType.Velocity) {
-				// velocity 高版本需要注册命令实现tab替换
-				Main.send(player, Channel.ServerInfo.sendC(Main.getMain().getName(), CommandManager.getCommandNames()));
-			}
-			break;
-		}
-		case TAB_PARSE: {
-			Channel.TabParse.parseS(message, (id, cmd) -> {
-				val tabs = CommandManager.tabParse(player, cmd);
-				Main.send(player, Channel.TabParse.sendC(id, tabs));
-			});
 			break;
 		}
 		case VANISH: {
