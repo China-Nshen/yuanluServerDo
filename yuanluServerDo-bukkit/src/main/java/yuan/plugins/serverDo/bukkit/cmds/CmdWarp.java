@@ -47,6 +47,7 @@ public final class CmdWarp extends TabWarp {
 					Core.listenCallBack(player, Channel.WARP, 3, (BoolConsumer) success -> {
 						if (!success) {
 							BC_ERROR.send(sender);
+							ShareData.getLogger().info("[CrossServerTeleportEvent] basic.bungee-error => GermPacketAPI.openGui(" + player.getName() + ", null)");
 							GermPacketAPI.openGui(player, "null");
 						}
 					});

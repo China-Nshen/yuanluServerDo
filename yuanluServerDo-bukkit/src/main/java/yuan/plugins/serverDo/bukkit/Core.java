@@ -1105,6 +1105,7 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 			listenCallBack(player, Channel.TP_LOC, 0, (BoolConsumer) success -> {
 				if (!success) {
 					BC_ERROR.send(player);
+					ShareData.getLogger().info("[CrossServerTeleportEvent] basic.bungee-error => GermPacketAPI.openGui(" + player.getName() + ", null)");
 					GermPacketAPI.openGui(player, "null");
 				}
 			});
@@ -1139,6 +1140,7 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 			listenCallBack(player, Channel.TP, 7, (BiBoolConsumer) (success, error) -> {
 				if (error) {
 					BC_ERROR.send(player);
+					ShareData.getLogger().info("[CrossServerTeleportEvent] basic.bungee-error => GermPacketAPI.openGui(" + player.getName() + ", null)");
 					GermPacketAPI.openGui(player, "null");
 				}
 				else if (!success) BC_PLAYER_OFF.send(player);
