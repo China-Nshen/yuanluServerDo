@@ -7,6 +7,7 @@
  */
 package yuan.plugins.serverDo.bukkit;
 
+import com.germ.germplugin.api.GermPacketAPI;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.bukkit.Bukkit;
@@ -31,6 +32,7 @@ import yuan.plugins.serverDo.ShareData.TabType;
 import yuan.plugins.serverDo.bukkit.cmds.CmdTpaccept;
 import yuan.plugins.serverDo.bukkit.cmds.CmdVanish;
 import yuan.plugins.serverDo.bukkit.cmds.CommandManager;
+import yuan.plugins.serverDo.bukkit.event.CrossServerTeleportEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -507,17 +509,6 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 			if (!meVer.equals(info.getVersion()))
 				Bukkit.getLogger().info("");
 				// VER_NO_RECOMMEND.send(player, meVer, info.getVersion());
-			if (info.getProxyType() == Channel.ServerInfo.ServerPkg.ProxyType.Velocity) {
-				// velocity 高版本需要注册命令实现tab替换
-				Main.send(player, Channel.ServerInfo.sendC(Main.getMain().getName(), CommandManager.getCommandNames()));
-			}
-			break;
-		}
-		case TAB_PARSE: {
-			Channel.TabParse.parseS(message, (id, cmd) -> {
-				val tabs = CommandManager.tabParse(player, cmd);
-				Main.send(player, Channel.TabParse.sendC(id, tabs));
-			});
 			break;
 		}
 		case VANISH: {
@@ -1107,9 +1098,16 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 		 */
 		public static void tpToRemote(@NonNull Player player, @NonNull ShareLocation loc, boolean noRecord) {
 			if (loc.getServer() == null) throw new IllegalArgumentException("No server specified: " + loc);
+			ShareData.getLogger().info("[CrossServerTeleportEvent] TP_LOC server=" + loc.getServer() + ", loc=" + loc + ", operator=" + player.getName());
+			Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), null, loc));
+			GermPacketAPI.openGui(player, "tpgui");
 			if (!noRecord) BackHandler.recordLocation(player, loc.getServer());
 			listenCallBack(player, Channel.TP_LOC, 0, (BoolConsumer) success -> {
-				if (!success) BC_ERROR.send(player);
+				if (!success) {
+					BC_ERROR.send(player);
+					ShareData.getLogger().info("[CrossServerTeleportEvent] basic.bungee-error => GermPacketAPI.openGui(" + player.getName() + ", null)");
+					GermPacketAPI.openGui(player, "null");
+				}
 			});
 			byte[] data = Channel.TpLoc.s0C_tpLoc(loc, loc.getServer());
 			Main.send(player,data);
@@ -1130,15 +1128,21 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 		 */
 		private static void tpToRemote(@NonNull Player player, @NonNull String mover, @NonNull String target, long waitTime, boolean needCooldown,
 				boolean noRecord) {
-			if (ShareData.isDEBUG())
-				ShareData.getLogger().info(String.format("[tpTo] remote: %s->%s, wait: %s, cd: %s", mover, target, waitTime, needCooldown));
+			ShareData.getLogger().info(String.format("[tpTo] remote: %s->%s, wait: %s, cd: %s", mover, target, waitTime, needCooldown));
 			if (waitTime > 0) {
 				checkDelay(player, Conf.delay, () -> tpToRemote(player, mover, target, -1, needCooldown, noRecord));
 				return;
 			}
+			ShareData.getLogger().info("[CrossServerTeleportEvent] TP mover=" + mover + ", target=" + target + ", operator=" + player.getName());
+			Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, mover, target, null));
+			GermPacketAPI.openGui(player, "tpgui");
 			if (!noRecord) BackHandler.recordLocation(player, null, target);
 			listenCallBack(player, Channel.TP, 7, (BiBoolConsumer) (success, error) -> {
-				if (error) BC_ERROR.send(player);
+				if (error) {
+					BC_ERROR.send(player);
+					ShareData.getLogger().info("[CrossServerTeleportEvent] basic.bungee-error => GermPacketAPI.openGui(" + player.getName() + ", null)");
+					GermPacketAPI.openGui(player, "null");
+				}
 				else if (!success) BC_PLAYER_OFF.send(player);
 			});
 			Main.send(player, Channel.Tp.s6C_tpThird(mover, target));
