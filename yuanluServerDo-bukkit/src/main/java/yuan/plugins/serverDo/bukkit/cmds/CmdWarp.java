@@ -4,13 +4,17 @@
 package yuan.plugins.serverDo.bukkit.cmds;
 
 import lombok.val;
+import com.germ.germplugin.api.GermPacketAPI;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import yuan.plugins.serverDo.Channel;
 import yuan.plugins.serverDo.Channel.Package.BoolConsumer;
+import yuan.plugins.serverDo.ShareData;
 import yuan.plugins.serverDo.Tool;
 import yuan.plugins.serverDo.bukkit.Core;
 import yuan.plugins.serverDo.bukkit.Main;
+import yuan.plugins.serverDo.bukkit.event.CrossServerTeleportEvent;
 
 import java.util.Collection;
 import java.util.function.BiConsumer;
@@ -37,6 +41,9 @@ public final class CmdWarp extends TabWarp {
 					msg("not-found", sender, arg);
 				} else {
 					msg("tp", sender, name, server);
+					ShareData.getLogger().info("[CrossServerTeleportEvent] WARP name=" + name + ", server=" + server + ", operator=" + player.getName());
+					Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "warp:" + name + "@" + server, null));
+					GermPacketAPI.openGui(player, "tpgui");
 					Core.listenCallBack(player, Channel.WARP, 3, (BoolConsumer) success -> {
 						if (!success) BC_ERROR.send(sender);
 					});
