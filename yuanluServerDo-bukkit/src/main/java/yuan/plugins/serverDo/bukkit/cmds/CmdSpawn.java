@@ -46,7 +46,10 @@ public final class CmdSpawn extends Cmd {
 				Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "spawn:" + name + "@" + server, null));
 				GermPacketAPI.openGui(player, "tpgui");
 				Core.listenCallBack(player, Channel.WARP, 3, (BoolConsumer) success -> {
-					if (!success) BC_ERROR.send(sender);
+					if (!success) {
+						BC_ERROR.send(sender);
+						GermPacketAPI.openGui(player, "null");
+					}
 				});
 				Main.send(player, Channel.Warp.s3C_tpWarp(name));
 			}

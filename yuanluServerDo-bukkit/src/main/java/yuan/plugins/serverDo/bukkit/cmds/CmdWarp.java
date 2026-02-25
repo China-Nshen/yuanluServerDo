@@ -45,7 +45,10 @@ public final class CmdWarp extends TabWarp {
 					Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "warp:" + name + "@" + server, null));
 					GermPacketAPI.openGui(player, "tpgui");
 					Core.listenCallBack(player, Channel.WARP, 3, (BoolConsumer) success -> {
-						if (!success) BC_ERROR.send(sender);
+						if (!success) {
+							BC_ERROR.send(sender);
+							GermPacketAPI.openGui(player, "null");
+						}
 					});
 					Core.BackHandler.recordLocation(player,server);
 					Main.send(player, Channel.Warp.s3C_tpWarp(name));
