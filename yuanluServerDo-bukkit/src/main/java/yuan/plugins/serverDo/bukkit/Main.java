@@ -1,11 +1,13 @@
 package yuan.plugins.serverDo.bukkit;
 
 import cn.mapland.yuanlu.updater.bukkit.BukkitUpdater;
+import com.germ.germplugin.api.GermPacketAPI;
 import lombok.Getter;
 import lombok.val;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.MultiLineChart;
 import org.bstats.charts.SimplePie;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -58,9 +60,102 @@ public class Main extends JavaPlugin implements Listener {
 	 * @param player 玩家
 	 * @param data   数据
 	 */
+
+	/**
+	 * 调用Germ GUI, 自动保证主线程执行并输出结果日志。
+	 */
+	public static void openGermGui(Player player, String gui, String reason) {
+		Main plugin = getMain();
+		if (plugin == null) {
+			ShareData.getLogger().warning("[CrossServerTeleportEvent] skip GermPacketAPI.openGui(" + player.getName() + ", " + gui + ") reason=" + reason + ", plugin=null");
+			return;
+		}
+		Runnable run = () -> {
+			try {
+				GermPacketAPI.openGui(player, gui);
+				ShareData.getLogger().info("[CrossServerTeleportEvent] GermPacketAPI.openGui success: player=" + player.getName() + ", gui=" + gui + ", reason=" + reason);
+			} catch (Throwable e) {
+				ShareData.getLogger().warning("[CrossServerTeleportEvent] GermPacketAPI.openGui failed: player=" + player.getName() + ", gui=" + gui + ", reason=" + reason + ", err=" + e.getClass().getSimpleName() + ": " + e.getMessage());
+			}
+		};
+		if (Bukkit.isPrimaryThread()) run.run();
+		else Bukkit.getScheduler().runTask(plugin, run);
+	}
+
+	/**
+	 * 用控制台命令方式调用Germ打开GUI。
+	 */
+	public static void openGermGuiByCommand(Player player, String gui, String reason) {
+		String cmd = "gp open " + player.getName() + " " + gui;
+		Runnable run = () -> {
+			boolean ok = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+			if (ok) ShareData.getLogger().info("[CrossServerTeleportEvent] command success: /" + cmd + ", reason=" + reason);
+			else ShareData.getLogger().warning("[CrossServerTeleportEvent] command failed: /" + cmd + ", reason=" + reason);
+		};
+		if (Bukkit.isPrimaryThread()) run.run();
+		else {
+			Main plugin = getMain();
+			if (plugin == null) {
+				ShareData.getLogger().warning("[CrossServerTeleportEvent] skip command: /" + cmd + ", reason=" + reason + ", plugin=null");
+				return;
+			}
+			Bukkit.getScheduler().runTask(plugin, run);
+		}
+	}
+
+	/**
+	 * 判断目标服务器是否为跨服目标。
+	 */
+	public static boolean isCrossServerTarget(String server) {
+		if (server == null || server.isEmpty()) return false;
+		String current = getCurrentServerNameCompat();
+		if (current != null && !current.isEmpty() && server.equalsIgnoreCase(current)) return false;
+		return true;
+	}
+
+	/** 兼容不同Bukkit版本获取当前服务器名。 */
+	private static String getCurrentServerNameCompat() {
+		try {
+			Object name = Bukkit.class.getMethod("getServerName").invoke(null);
+			if (name instanceof String) return (String) name;
+		} catch (Throwable ignored) {
+			// old bukkit api
+		}
+		try {
+			val main = getMain();
+			if (main != null) {
+				Object name = main.getServer().getClass().getMethod("getServerName").invoke(main.getServer());
+				if (name instanceof String) return (String) name;
+			}
+		} catch (Throwable ignored) {
+			// old bukkit api
+		}
+		return null;
+	}
+
 	public static void send(Player player, byte[] data) {
-		if (isDEBUG()) getMain().getLogger().info("发送: " + player.getName() + " " + Arrays.toString(data));
-		player.sendPluginMessage(getMain(), ShareData.BC_CHANNEL, data);
+		Main plugin = getMain();
+		if (plugin == null || !plugin.isEnabled()) {
+			val p = Bukkit.getPluginManager().getPlugin("yuanluServerDo");
+			if (p instanceof Main && p.isEnabled()) plugin = (Main) p;
+		}
+		if (plugin == null || !plugin.isEnabled()) {
+			try {
+				plugin = JavaPlugin.getPlugin(Main.class);
+			} catch (Throwable ignored) {
+				// ignore and handle below
+			}
+		}
+		if (plugin == null || !plugin.isEnabled()) {
+			Bukkit.getLogger().warning("[yuanluServerDo] plugin is not enabled, cancel sendPluginMessage for " + player.getName());
+			return;
+		}
+		if (isDEBUG()) plugin.getLogger().info("发送: " + player.getName() + " " + Arrays.toString(data));
+		try {
+			player.sendPluginMessage(plugin, ShareData.BC_CHANNEL, data);
+		} catch (IllegalArgumentException e) {
+			plugin.getLogger().warning("sendPluginMessage failed(plugin enabled=" + plugin.isEnabled() + ", player=" + player.getName() + "): " + e.getMessage());
+		}
 	}
 
 	/**
