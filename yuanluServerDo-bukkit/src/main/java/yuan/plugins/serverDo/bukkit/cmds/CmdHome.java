@@ -47,7 +47,7 @@ public final class CmdHome extends TabHome {
 						if (!success) {
 							BC_ERROR.send(sender);
 							Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
-						}
+						} else Main.closeGermGuiByCommand(player, "cross-server-teleport-complete");
 
 					});
 					Core.BackHandler.recordLocation(player,server);

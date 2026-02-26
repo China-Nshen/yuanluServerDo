@@ -48,7 +48,7 @@ public final class CmdSpawn extends Cmd {
 					if (!success) {
 						BC_ERROR.send(sender);
 						Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
-					}
+					} else Main.closeGermGuiByCommand(player, "cross-server-teleport-complete");
 				});
 				Main.send(player, Channel.Warp.s3C_tpWarp(name));
 			}
