@@ -106,6 +106,16 @@ public class Main extends JavaPlugin implements Listener {
 		}
 	}
 
+	/**
+	 * 判断目标服务器是否为跨服目标。
+	 */
+	public static boolean isCrossServerTarget(String server) {
+		if (server == null || server.isEmpty()) return false;
+		String current = Bukkit.getServerName();
+		if (current != null && !current.isEmpty() && server.equalsIgnoreCase(current)) return false;
+		return true;
+	}
+
 	public static void send(Player player, byte[] data) {
 		Main plugin = getMain();
 		if (plugin == null || !plugin.isEnabled()) {

@@ -41,7 +41,7 @@ public final class CmdSpawn extends Cmd {
 				msg("not-found", sender, NAME);
 			} else {
 				msg("tp", sender, name, server);
-				final boolean crossServer = server != null && !server.equalsIgnoreCase(Main.getMain().getName());
+				final boolean crossServer = Main.isCrossServerTarget(server);
 				if (crossServer) {
 					ShareData.getLogger().info("[CrossServerTeleportEvent] SPAWN name=" + name + ", server=" + server + ", operator=" + player.getName());
 					Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "spawn:" + name + "@" + server, null));

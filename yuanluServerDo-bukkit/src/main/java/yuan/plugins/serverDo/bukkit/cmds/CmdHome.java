@@ -40,7 +40,7 @@ public final class CmdHome extends TabHome {
 					msg("not-found", sender, arg);
 				} else {
 					msg("tp", sender, name, server);
-					final boolean crossServer = server != null && !server.equalsIgnoreCase(Main.getMain().getName());
+					final boolean crossServer = Main.isCrossServerTarget(server);
 					if (crossServer) {
 						ShareData.getLogger().info("[CrossServerTeleportEvent] HOME name=" + name + ", server=" + server + ", operator=" + player.getName());
 						Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "home:" + name + "@" + server, null));
