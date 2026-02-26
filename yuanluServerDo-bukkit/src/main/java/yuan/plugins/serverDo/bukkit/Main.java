@@ -109,11 +109,49 @@ public class Main extends JavaPlugin implements Listener {
 	/**
 	 * 判断目标服务器是否为跨服目标。
 	 */
-	public static boolean isCrossServerTarget(String server) {
+	public static boolean isCrossServerTarget(Player player, String server) {
 		if (server == null || server.isEmpty()) return false;
-		String current = Bukkit.getServerName();
+		String current = getCurrentServerNameCompat(player);
 		if (current != null && !current.isEmpty() && server.equalsIgnoreCase(current)) return false;
 		return true;
+	}
+
+	/** 兼容不同环境获取当前子服名(优先PAPI: %cmi_user_bungeeserver%)。 */
+	private static String getCurrentServerNameCompat(Player player) {
+		String viaPapi = getServerNameByPapi(player);
+		if (viaPapi != null && !viaPapi.isEmpty()) return viaPapi;
+		try {
+			Object name = Bukkit.class.getMethod("getServerName").invoke(null);
+			if (name instanceof String) return (String) name;
+		} catch (Throwable ignored) {
+			// old bukkit api
+		}
+		try {
+			val main = getMain();
+			if (main != null) {
+				Object name = main.getServer().getClass().getMethod("getServerName").invoke(main.getServer());
+				if (name instanceof String) return (String) name;
+			}
+		} catch (Throwable ignored) {
+			// old bukkit api
+		}
+		return null;
+	}
+
+	/** 通过PlaceholderAPI解析当前玩家子服名。 */
+	private static String getServerNameByPapi(Player player) {
+		if (player == null) return null;
+		try {
+			Class<?> papi = Class.forName("me.clip.placeholderapi.PlaceholderAPI");
+			Object parsed = papi.getMethod("setPlaceholders", org.bukkit.OfflinePlayer.class, String.class)
+					.invoke(null, player, "%cmi_user_bungeeserver%");
+			if (!(parsed instanceof String)) return null;
+			String value = ((String) parsed).trim();
+			if (value.isEmpty() || value.equals("%cmi_user_bungeeserver%")) return null;
+			return value;
+		} catch (Throwable ignored) {
+			return null;
+		}
 	}
 
 	public static void send(Player player, byte[] data) {
