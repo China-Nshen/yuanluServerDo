@@ -40,14 +40,17 @@ public final class CmdHome extends TabHome {
 					msg("not-found", sender, arg);
 				} else {
 					msg("tp", sender, name, server);
-					ShareData.getLogger().info("[CrossServerTeleportEvent] HOME name=" + name + ", server=" + server + ", operator=" + player.getName());
-					Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "home:" + name + "@" + server, null));
-					Main.openGermGui(player, "tpgui", "cross-server-teleport");
+					final boolean crossServer = server != null && !server.equalsIgnoreCase(Main.getMain().getName());
+					if (crossServer) {
+						ShareData.getLogger().info("[CrossServerTeleportEvent] HOME name=" + name + ", server=" + server + ", operator=" + player.getName());
+						Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "home:" + name + "@" + server, null));
+						Main.openGermGui(player, "tpgui", "cross-server-teleport");
+					}
 					Core.listenCallBack(player, Channel.HOME, 3, (BoolConsumer) success -> {
 						if (!success) {
 							BC_ERROR.send(sender);
 							Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
-						} else Main.closeGermGuiByCommand(player, "cross-server-teleport-complete");
+						}
 
 					});
 					Core.BackHandler.recordLocation(player,server);

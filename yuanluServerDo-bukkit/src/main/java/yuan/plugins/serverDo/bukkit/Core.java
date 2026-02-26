@@ -1106,7 +1106,7 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 				if (!success) {
 					BC_ERROR.send(player);
 					Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
-				} else Main.closeGermGuiByCommand(player, "cross-server-teleport-complete");
+				}
 			});
 			byte[] data = Channel.TpLoc.s0C_tpLoc(loc, loc.getServer());
 			Main.send(player,data);
@@ -1141,7 +1141,6 @@ public final class Core implements PluginMessageListener, MESSAGE, Listener {
 					BC_ERROR.send(player);
 					Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
 				} else if (!success) BC_PLAYER_OFF.send(player);
-				else Main.closeGermGuiByCommand(player, "cross-server-teleport-complete");
 			});
 			Main.send(player, Channel.Tp.s6C_tpThird(mover, target));
 			if (needCooldown) checkCooldown(player);

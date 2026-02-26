@@ -41,14 +41,17 @@ public final class CmdSpawn extends Cmd {
 				msg("not-found", sender, NAME);
 			} else {
 				msg("tp", sender, name, server);
-				ShareData.getLogger().info("[CrossServerTeleportEvent] SPAWN name=" + name + ", server=" + server + ", operator=" + player.getName());
-				Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "spawn:" + name + "@" + server, null));
-				Main.openGermGui(player, "tpgui", "cross-server-teleport");
+				final boolean crossServer = server != null && !server.equalsIgnoreCase(Main.getMain().getName());
+				if (crossServer) {
+					ShareData.getLogger().info("[CrossServerTeleportEvent] SPAWN name=" + name + ", server=" + server + ", operator=" + player.getName());
+					Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "spawn:" + name + "@" + server, null));
+					Main.openGermGui(player, "tpgui", "cross-server-teleport");
+				}
 				Core.listenCallBack(player, Channel.WARP, 3, (BoolConsumer) success -> {
 					if (!success) {
 						BC_ERROR.send(sender);
 						Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
-					} else Main.closeGermGuiByCommand(player, "cross-server-teleport-complete");
+					}
 				});
 				Main.send(player, Channel.Warp.s3C_tpWarp(name));
 			}
