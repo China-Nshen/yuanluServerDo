@@ -6,11 +6,14 @@ package yuan.plugins.serverDo.bukkit.cmds;
 import lombok.val;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.Bukkit;
 import yuan.plugins.serverDo.Channel;
 import yuan.plugins.serverDo.Channel.Package.BoolConsumer;
+import yuan.plugins.serverDo.ShareData;
 import yuan.plugins.serverDo.Tool;
 import yuan.plugins.serverDo.bukkit.Core;
 import yuan.plugins.serverDo.bukkit.Main;
+import yuan.plugins.serverDo.bukkit.event.CrossServerTeleportEvent;
 
 import java.util.Collection;
 import java.util.function.BiConsumer;
@@ -37,8 +40,17 @@ public final class CmdHome extends TabHome {
 					msg("not-found", sender, arg);
 				} else {
 					msg("tp", sender, name, server);
+					final boolean crossServer = Main.isCrossServerTarget(server);
+					if (crossServer) {
+						ShareData.getLogger().info("[CrossServerTeleportEvent] HOME name=" + name + ", server=" + server + ", operator=" + player.getName());
+						Bukkit.getPluginManager().callEvent(new CrossServerTeleportEvent(player, player.getName(), "home:" + name + "@" + server, null));
+						Main.openGermGui(player, "tpgui", "cross-server-teleport");
+					}
 					Core.listenCallBack(player, Channel.HOME, 3, (BoolConsumer) success -> {
-						if (!success) BC_ERROR.send(sender);
+						if (!success) {
+							BC_ERROR.send(sender);
+							Main.openGermGuiByCommand(player, "null", "basic.bungee-error");
+						}
 
 					});
 					Core.BackHandler.recordLocation(player,server);
